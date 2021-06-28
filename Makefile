@@ -21,82 +21,113 @@ endif
 
 all: manager
 
-# Create a local docker registry, start kind cluster, and install Orkestra
+## Create kind cluster with local registry and prepopulate the local registry.
+setup: kind-create prepopulate-kind-registry
+
+## Deploy the Orkestra helm chart (values-ci.yaml) with Orkestra controller disabled.
 dev:
-	make kind-create
 	helm upgrade --install orkestra chart/orkestra --wait --atomic -n orkestra --create-namespace --values ${CI_VALUES}
 
+## Deploy the Orkestra helm chart (values-ci.yaml) with Orkestra controller enabled (in debug mode).
 debug: dev
 	go run main.go --debug --log-level ${DEBUG_LEVEL}
 
+## Cleanup any Orkestra installation and the kind cluster with registry.
+clean: kind-delete
+	@rm -rf $(BIN_DIR)
+
+## Cleanup any previous Orkestra helm chart installation.
+clean-chart:
+	helm delete orkestra -n orkestra 2>&1 || true
+	@rm -rf $(BIN_DIR)
+
+## Run tests.
+test: install
+	go test -v ./... -coverprofile coverage.txt -timeout 35m
+
+## Run tests using Ginkgo.
 ginkgo-test: install
 	go get github.com/onsi/ginkgo/ginkgo
 	ginkgo ./... -cover -coverprofile coverage.txt
 
-# Run tests
-test: install
-	go test -v ./... -coverprofile coverage.txt -timeout 35m
+## Prepare code for PR.
+prepare-for-pr: vet fmt api-docs
+	@echo "\n> ❗️ Remember to run the tests"
 
-# Build manager binary
+## Build manager binary.
 manager: generate fmt vet
 	go build -o bin/manager main.go
 
-# Run against the configured Kubernetes cluster in ~/.kube/config
+## Run against the configured Kubernetes cluster in ~/.kube/config.
 run: generate fmt vet manifests
 	go run ./main.go
 
-# Install CRDs into a cluster
+## Install CRDs into a cluster.
 install: manifests
 	kustomize build config/crd | kubectl apply -f -
 
-# Uninstall CRDs from a cluster
+## Uninstall CRDs from a cluster.
 uninstall: manifests
 	kustomize build config/crd | kubectl delete -f -
 
-# Deploy controller in the configured Kubernetes cluster in ~/.kube/config
+# #Deploy controller in the configured Kubernetes cluster in ~/.kube/config.
 deploy: manifests
 	cd config/manager && kustomize edit set image controller=${IMG}
 	kustomize build config/default | kubectl apply -f -
 
-# Generate manifests e.g. CRD, RBAC etc.
-manifests: controller-gen
-	$(CONTROLLER_GEN) $(CRD_OPTIONS) rbac:roleName=manager-role webhook paths="./..." output:crd:artifacts:config=config/crd/bases
-	$(CONTROLLER_GEN) $(CRD_OPTIONS) rbac:roleName=manager-role webhook paths="./..." output:crd:artifacts:config=chart/orkestra/crds
-
-# Prepare code for PR
-prepare-for-pr: vet fmt api-docs
-
-# Generate API reference documentation
-api-docs: gen-crd-api-reference-docs
-	$(API_REF_GEN) -api-dir=./api/v1alpha1 -config=./hack/api-docs/config.json -template-dir=./hack/api-docs/template -out-file=./docs/api.md
-
-# Run go fmt against code
-fmt:
-	go fmt ./...
-
-# Run go vet against code
-vet:
-	go vet ./...
-
-# Generate code
+## Generate code.
 generate: controller-gen
 	$(CONTROLLER_GEN) object:headerFile="hack/boilerplate.go.txt" paths="./..."
 
-# Build the docker image
+## Generate manifests e.g. CRD, RBAC etc.
+manifests: generate
+	$(CONTROLLER_GEN) $(CRD_OPTIONS) rbac:roleName=manager-role webhook paths="./..." output:crd:artifacts:config=config/crd/bases
+	$(CONTROLLER_GEN) $(CRD_OPTIONS) rbac:roleName=manager-role webhook paths="./..." output:crd:artifacts:config=chart/orkestra/crds
+
+## Generate API reference documentation.
+api-docs: gen-crd-api-reference-docs
+	$(API_REF_GEN) -api-dir=./api/v1alpha1 -config=./hack/api-docs/config.json -template-dir=./hack/api-docs/template -out-file=./docs/api.md
+
+## Create kind cluster with the local registry enabled in containerd.
+kind-create:
+	@echo "> 🔨 Creating kind cluster with local registry...\n"
+	bash ./hack/create-kind-with-registry.sh
+	@echo "> 👍 Done\n"
+
+## Delete kind cluster with the local registry enabled in containerd.
+kind-delete: 
+	@echo "> 🔨 Deleting kind cluster with local registry...\n"
+	bash ./hack/teardown-kind-with-registry.sh
+	@echo "> 👍 Done\n"
+
+## Prepopulate kind registry with required docker images.
+prepopulate-kind-registry:
+	@echo "> 🔨 Prepopulating kind registry...\n"
+	bash ./hack/prepopulate-kind-registry.sh
+	@echo "> 👍 Done\n"
+
+## Run go fmt against code.
+fmt:
+	go fmt ./...
+
+## Run go vet against code.
+vet:
+	go vet ./...
+
+## Build the docker image.
 docker-build: test
 	docker build . -t ${IMG}
 
-# Push the docker image
+## Push the docker image.
 docker-push:
 	docker push ${IMG}
 
-# setup kubebuilder
+## setup kubebuilder.
 setup-kubebuilder:
 	bash hack/setup-envtest.sh;
 	bash hack/setup-kubebuilder.sh
 
-# find or download controller-gen
-# download controller-gen if necessary
+## Find or download controller-gen.
 controller-gen:
 ifeq (, $(shell which controller-gen))
 	@{ \
@@ -112,7 +143,7 @@ else
 CONTROLLER_GEN=$(shell which controller-gen)
 endif
 
-# Find or download gen-crd-api-reference-docs
+## Find or download gen-crd-api-reference-docs.
 gen-crd-api-reference-docs:
 ifeq (, $(shell which gen-crd-api-reference-docs))
 	@{ \
@@ -127,22 +158,3 @@ API_REF_GEN=$(GOBIN)/gen-crd-api-reference-docs
 else
 API_REF_GEN=$(shell which gen-crd-api-reference-docs)
 endif
-## --------------------------------------
-## Kind
-## --------------------------------------
-KIND_CLUSTER_NAME ?= orkestra
-
-kind-create:
-	./hack/create-kind-cluster.sh
-	kind load docker-image $(IMG) --name $(KIND_CLUSTER_NAME)
-
-kind-delete: 
-	./hack/teardown-kind-with-registry.sh
-
-## --------------------------------------
-## Cleanup
-## --------------------------------------
-
-clean:
-	./hack/teardown-kind-with-registry.sh
-	@rm -rf $(BIN_DIR)

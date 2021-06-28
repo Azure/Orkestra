@@ -5,31 +5,27 @@
 
 set -o errexit
 
-# If you wish to change the cluster name, reg_name or reg_port, make sure to also update
-# the following files:
-#                     teardown-kind-with-registry.sh
-#                     .kind-cluster.yaml
 KIND_CLUSTER_NAME="${KIND_CLUSTER_NAME:-orkestra}"
 reg_name='kind-registry'
 reg_port='5000'
 
-if kind get clusters | grep -q ^"${KIND_CLUSTER_NAME}"$ ; then
-  echo "cluster already exists, moving on"
-  exit 0
-fi
-
 # Create registry container unless it already exists
 running="$(docker inspect -f '{{.State.Running}}' "${reg_name}" 2>/dev/null || true)"
 if [ "${running}" != 'true' ]; then
-  echo "> Creating kind Registry container..."
+  echo "> Creating Kind Registry container ..."
   docker run \
     -d --restart=always -p "127.0.0.1:${reg_port}:5000" --name "${reg_name}" \
     registry:2
+else
+  echo "> Kind Registry container already exists, moving on ..."
 fi
 
-# create a kind cluster with the local registry enabled in containerd
-
-kind create cluster --name "${KIND_CLUSTER_NAME}" --config=.kind-cluster.yaml
+# Create kind cluster with the local registry enabled in containerd unless it already exists
+if kind get clusters | grep -q ^"${KIND_CLUSTER_NAME}"$ ; then
+  echo "> Kind cluster already exists, moving on ..."
+else
+  kind create cluster --name "${KIND_CLUSTER_NAME}" --config=.kind-cluster.yaml
+fi
 
 # connect the registry to the cluster network
 # (the network may already be connected)
