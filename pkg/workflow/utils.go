@@ -5,10 +5,10 @@ import (
 
 	"github.com/Azure/Orkestra/pkg/utils"
 	v1alpha13 "github.com/argoproj/argo-workflows/v3/pkg/apis/workflow/v1alpha1"
-	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
-func getTimeout(t *v1.Duration) *v1alpha13.AnyString {
+func getTimeout(t *metav1.Duration) *v1alpha13.AnyString {
 	if t == nil {
 		return utils.ToAnyStringPtr(DefaultTimeout)
 	}
