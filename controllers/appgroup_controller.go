@@ -7,6 +7,7 @@ import (
 	"context"
 
 	"github.com/Azure/Orkestra/pkg/helpers"
+	"github.com/Azure/Orkestra/pkg/plugins"
 
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 
@@ -50,6 +51,9 @@ type ApplicationGroupReconciler struct {
 	// CleanupDownloadedCharts signals the controller to delete the
 	// fetched charts after they have been repackaged and pushed to staging
 	CleanupDownloadedCharts bool
+
+	// Plugins that have been registered with the controller
+	Plugins map[string]plugins.Plugin
 }
 
 // +kubebuilder:rbac:groups=orkestra.azure.microsoft.com,resources=applicationgroups,verbs=get;list;watch;create;update;patch;delete

@@ -1,3 +1,5 @@
+{{ $pluginsEnabled := false}}
+{{ range $plugin := .Values.plugins }}{{ if $plugin.enabled }}{{ $pluginsEnabled = true}}{{ end }}{{ end }}
 {{ if not .Values.ci.enabled }}
 apiVersion: apps/v1
 kind: Deployment
@@ -48,8 +50,20 @@ spec:
           {{ if .Values.debug.enabled }}
           - --debug
           {{- end }}
-          - --log-level={{ .Values.logLevel | default 0 }}
+          {{- if $pluginsEnabled -}}
+          - --with-plugins={{ range $index, $plugin := .Values.plugins }}{{ if $plugin.enabled }}{{ if $index }},{{ end }}{{ $plugin.name }}{{end}}{{end}}
+          {{- end }}
           env:
+          {{- if .Values.keptn.enabled }}
+          - name: GITEA_ADMIN_PASSWORD
+            value: {{ .Values.gitea.gitea.admin.password }}
+          - name: GITEA_URL
+            value: {{ .Values.gitea.url }}
+          - name: GITEA_USERNAME
+            value: {{ .Values.gitea.username }}
+          - name: GITEA_PASSWORD
+            value: {{ .Values.gitea.password}}
+          {{- end }}
           - name: WORKFLOW_NAMESPACE 
             value: {{ .Release.Namespace }} 
           - name: WORKFLOW_SERVICEACCOUNT_NAME 

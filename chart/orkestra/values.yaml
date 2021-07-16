@@ -102,9 +102,14 @@ helm-controller:
       name: *serviceAccount
 
 plugins:
-  keptn:
-    enabled: &keptnEnabled false
+  - name: keptn
+    enabled: &keptnEnabled false 
     git:
+      url: &gitURL "http://{{ .Release.name }}-gitea-http:3000"
+      admin: 
+        password: &gitAdminPassword "gitea_admin"
+      username: &gitUsername "keptn"
+      password: &gitPassword "keptn"
       service:
         type: &gitServiceType LoadBalancer
     api-gateway:
@@ -115,6 +120,14 @@ plugins:
 # USE plugins.keptn to configure these values
 gitea:
   enabled: *keptnEnabled
+  url: *gitURL
+  username: *gitUsername
+  password: *gitPassword
+  gitea:
+    admin:
+      # default gitea admin password
+      username: "gitea_admin"
+      password: *gitAdminPassword
   service:
     http:
       type: *gitServiceType

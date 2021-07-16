@@ -3,6 +3,7 @@ module github.com/Azure/Orkestra
 go 1.15
 
 require (
+	code.gitea.io/sdk/gitea v0.14.1
 	github.com/argoproj/argo-workflows/v3 v3.0.7
 	github.com/chartmuseum/helm-push v0.9.0
 	github.com/fluxcd/helm-controller/api v0.9.0

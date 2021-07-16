@@ -9,6 +9,7 @@ import (
 	"os"
 	"time"
 
+	"github.com/Azure/Orkestra/pkg/plugins"
 	"github.com/Azure/Orkestra/pkg/utils"
 	"github.com/Azure/Orkestra/pkg/workflow"
 
@@ -59,6 +60,7 @@ func main() {
 	var debug bool
 	var workflowParallelism int64
 	var logLevel int
+	var withPlugins string
 
 	flag.StringVar(&metricsAddr, "metrics-addr", ":8081", "The address the metric endpoint binds to.")
 	flag.BoolVar(&enableLeaderElection, "enable-leader-election", false,
@@ -72,6 +74,8 @@ func main() {
 	flag.BoolVar(&debug, "debug", false, "Enable debug run of the appgroup controller")
 	flag.Int64Var(&workflowParallelism, "workflow-parallelism", 10, "Specifies the max number of workflow pods that can be executed in parallel")
 	flag.IntVar(&logLevel, "log-level", 0, "Log Level")
+	// plugin related flags
+	flag.StringVar(&withPlugins, "with-plugins", "", "Enable/disable specific plugins. Plugins must be provided as a comma seperated list")
 	flag.Parse()
 
 	if logLevel > 0 {
@@ -157,6 +161,20 @@ func main() {
 
 	baseLogger := ctrl.Log.WithName("controllers").WithName("ApplicationGroup")
 
+	// Initialize the plugins
+	var enabledPlugins map[string]plugins.Plugin
+	if enabledPlugins, err = plugins.DecomposeCSL(withPlugins); err != nil {
+		setupLog.Error(err, "unable to decompose plugins")
+		os.Exit(1)
+	}
+
+	for _, p := range enabledPlugins {
+		if err = p.Init(); err != nil {
+			setupLog.Error(err, "unable to initialize plugin", "plugin", p.Name())
+			os.Exit(1)
+		}
+	}
+
 	if err = (&controllers.ApplicationGroupReconciler{
 		Client:                  mgr.GetClient(),
 		Log:                     baseLogger,
@@ -168,6 +186,7 @@ func main() {
 		Recorder:                mgr.GetEventRecorderFor("appgroup-controller"),
 		DisableRemediation:      disableRemediation,
 		CleanupDownloadedCharts: cleanupDownloadedCharts,
+		Plugins:                 enabledPlugins,
 	}).SetupWithManager(mgr); err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "ApplicationGroup")
 		os.Exit(1)
