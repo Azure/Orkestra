@@ -70,9 +70,9 @@ func generateAppDAGTemplates(appGroup *v1alpha1.ApplicationGroup, namespace stri
 			hr.Spec.Interval = app.Spec.Release.Interval
 			hr.Spec.Values = app.Spec.Release.Values
 			hr.Labels = map[string]string{
-				ChartLabelKey:  app.Name,
-				OwnershipLabel: appGroup.Name,
-				HeritageLabel:  Project,
+				v1alpha1.ChartLabel:     app.Name,
+				v1alpha1.OwnershipLabel: appGroup.Name,
+				v1alpha1.HeritageLabel:  v1alpha1.HeritageValue,
 			}
 			hrStr := utils.HrToB64AnyStringPtr(hr)
 
@@ -85,7 +85,6 @@ func generateAppDAGTemplates(appGroup *v1alpha1.ApplicationGroup, namespace stri
 					},
 				},
 			}
-
 			ts = append(ts, tApp)
 		}
 	}
@@ -108,9 +107,9 @@ func generateSubchartAndAppDAGTasks(appGroupName, namespace string, app *v1alpha
 			v1alpha1.ParentChartAnnotation: app.Name,
 		}
 		hr.Labels = map[string]string{
-			ChartLabelKey:  app.Name,
-			OwnershipLabel: appGroupName,
-			HeritageLabel:  Project,
+			v1alpha1.ChartLabel:     app.Name,
+			v1alpha1.OwnershipLabel: appGroupName,
+			v1alpha1.HeritageLabel:  v1alpha1.HeritageValue,
 		}
 		hrStr := utils.HrToB64AnyStringPtr(hr)
 
@@ -123,9 +122,9 @@ func generateSubchartAndAppDAGTasks(appGroupName, namespace string, app *v1alpha
 	hr.Spec.Interval = app.Spec.Release.Interval
 	hr.Spec.Values = app.Spec.Release.Values
 	hr.Labels = map[string]string{
-		ChartLabelKey:  app.Name,
-		OwnershipLabel: appGroupName,
-		HeritageLabel:  Project,
+		v1alpha1.ChartLabel:     app.Name,
+		v1alpha1.OwnershipLabel: appGroupName,
+		v1alpha1.HeritageLabel:  v1alpha1.HeritageValue,
 	}
 
 	// Force disable all subchart for the staged application chart

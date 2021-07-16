@@ -136,8 +136,8 @@ func (helper *StatusHelper) marshallChartStatus(ctx context.Context, appGroup *v
 	subChartConditionMap map[string]map[string][]metav1.Condition,
 	err error) {
 	listOption := client.MatchingLabels{
-		workflow.OwnershipLabel: appGroup.Name,
-		workflow.HeritageLabel:  workflow.Project,
+		v1alpha1.OwnershipLabel: appGroup.Name,
+		v1alpha1.HeritageLabel:  v1alpha1.HeritageValue,
 	}
 
 	// Init the mappings

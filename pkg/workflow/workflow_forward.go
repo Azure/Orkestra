@@ -86,7 +86,7 @@ func (wc *ForwardWorkflowClient) Submit(ctx context.Context) error {
 	}
 
 	// Create the Workflow
-	wc.workflow.Labels[OwnershipLabel] = wc.appGroup.Name
+	wc.workflow.Labels[v1alpha1.OwnershipLabel] = wc.appGroup.Name
 	if err := controllerutil.SetControllerReference(wc.appGroup, wc.workflow, wc.Scheme()); err != nil {
 		return fmt.Errorf("unable to set ApplicationGroup as owner of Argo Workflow: %w", err)
 	}

@@ -11,7 +11,6 @@ import (
 	"github.com/Azure/Orkestra/pkg/registry"
 	"github.com/Azure/Orkestra/pkg/utils"
 	"github.com/Azure/Orkestra/pkg/workflow"
-	fluxhelmv2beta1 "github.com/fluxcd/helm-controller/api/v2beta1"
 	"github.com/go-logr/logr"
 	"github.com/jinzhu/copier"
 	"helm.sh/helm/v3/pkg/chart"
@@ -288,20 +287,6 @@ func (helper *ReconcileHelper) reconcileApplications() error {
 		}
 
 		helper.Instance.Status.Applications[i].ChartStatus.Staged = true
-	}
-	return nil
-}
-
-func (helper *ReconcileHelper) rollbackFailedHelmReleases(ctx context.Context, hrs []fluxhelmv2beta1.HelmRelease) error {
-	for _, hr := range hrs {
-		err := utils.HelmRollback(hr.Spec.ReleaseName, hr.Spec.TargetNamespace)
-		if err != nil {
-			return err
-		}
-		err = helper.Delete(ctx, &hr)
-		if err != nil {
-			return err
-		}
 	}
 	return nil
 }

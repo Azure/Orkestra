@@ -1,6 +1,7 @@
 package utils
 
 import (
+	"reflect"
 	"testing"
 )
 
@@ -51,7 +52,7 @@ func TestConvertToDNS1123(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if got := ConvertToDNS1123(tt.args.in); got != tt.want {
+			if got := ConvertToDNS1123(tt.args.in); !reflect.DeepEqual(got, tt.want) {
 				t.Errorf("ConvertDNS1123() = %v, want %v", got, tt.want)
 			}
 		})
@@ -111,7 +112,7 @@ func TestTruncateString(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if got := TruncateString(tt.args.in, tt.args.num); got != tt.want {
+			if got := TruncateString(tt.args.in, tt.args.num); !reflect.DeepEqual(got, tt.want) {
 				t.Errorf("TruncateString() = %v, want %v", got, tt.want)
 			}
 		})
@@ -172,7 +173,67 @@ func TestIsFileYaml(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if got := IsFileYaml(tt.args.f); got != tt.want {
+			if got := IsFileYaml(tt.args.f); !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("IsFileYaml() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+func TestRemoveStringFromSlice(t *testing.T) {
+	type args struct {
+		s string
+		v []string
+	}
+	tests := []struct {
+		name string
+		args args
+		want []string
+	}{
+		{
+			name: "removing with single item",
+			args: args{
+				s: "apple",
+				v: []string{"apple"},
+			},
+			want: []string{},
+		},
+		{
+			name: "removing from middle of slice",
+			args: args{
+				s: "orange",
+				v: []string{"apple", "orange", "banana"},
+			},
+			want: []string{"apple", "banana"},
+		},
+		{
+			name: "not finding the item in the slice",
+			args: args{
+				s: "papaya",
+				v: []string{"apple", "orange", "banana"},
+			},
+			want: []string{"apple", "orange", "banana"},
+		},
+		{
+			name: "finding item at the end of slice",
+			args: args{
+				s: "banana",
+				v: []string{"apple", "orange", "banana"},
+			},
+			want: []string{"apple", "orange"},
+		},
+		{
+			name: "passing empty slice",
+			args: args{
+				s: "banana",
+				v: []string{},
+			},
+			want: []string{},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := RemoveStringFromSlice(tt.args.s, tt.args.v); !reflect.DeepEqual(got, tt.want) {
 				t.Errorf("IsFileYaml() = %v, want %v", got, tt.want)
 			}
 		})

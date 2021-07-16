@@ -3,7 +3,10 @@ package workflow
 import (
 	"context"
 	"fmt"
+
+	"github.com/Azure/Orkestra/pkg/utils"
 	v1alpha13 "github.com/argoproj/argo-workflows/v3/pkg/apis/workflow/v1alpha1"
+	fluxhelmv2beta1 "github.com/fluxcd/helm-controller/api/v2beta1"
 
 	"github.com/Azure/Orkestra/pkg/meta"
 
@@ -51,16 +54,16 @@ func (wc *RollbackWorkflowClient) Generate(ctx context.Context) error {
 		return fmt.Errorf("applicationGroup object cannot be nil")
 	}
 
-	rollbackInstance := wc.appGroup.DeepCopy()
+	wc.rollbackAppGroup = wc.appGroup.DeepCopy()
 	lastSuccessful := wc.appGroup.GetLastSuccessful()
 	if lastSuccessful == nil {
 		return meta.ErrPreviousSpecNotSet
 	}
-	rollbackInstance.Spec = *lastSuccessful
-	rollbackWorkflowName := fmt.Sprintf("%s-rollback", rollbackInstance.Name)
+	wc.rollbackAppGroup.Spec = *lastSuccessful
+	rollbackWorkflowName := fmt.Sprintf("%s-rollback", wc.rollbackAppGroup.Name)
 	wc.workflow = initWorkflowObject(rollbackWorkflowName, wc.namespace, wc.parallelism)
 
-	entryTemplate, templates, err := generateTemplates(rollbackInstance, wc.GetOptions())
+	entryTemplate, templates, err := generateTemplates(wc.rollbackAppGroup, wc.GetOptions())
 	if err != nil {
 		return fmt.Errorf("failed to generate argo workflow: %w", err)
 	}
@@ -72,8 +75,12 @@ func (wc *RollbackWorkflowClient) Generate(ctx context.Context) error {
 }
 
 func (wc *RollbackWorkflowClient) Submit(ctx context.Context) error {
+	if err := wc.purgeNewerReleases(ctx); err != nil {
+		return fmt.Errorf("failed to purge helm releases: %w", err)
+	}
+
 	// Create the new workflow, only if there is not already a rollback workflow that has been created
-	wc.workflow.Labels[OwnershipLabel] = wc.appGroup.Name
+	wc.workflow.Labels[v1alpha1.OwnershipLabel] = wc.appGroup.Name
 	if err := controllerutil.SetControllerReference(wc.appGroup, wc.workflow, wc.Scheme()); err != nil {
 		return fmt.Errorf("unable to set ApplicationGroup as owner of Argo Workflow: %w", err)
 	}
@@ -81,4 +88,35 @@ func (wc *RollbackWorkflowClient) Submit(ctx context.Context) error {
 		return fmt.Errorf("failed to CREATE argo workflow object: %w", err)
 	}
 	return nil
+}
+
+// TODO: Purge releases should remove the applications with dependencies in mind
+func (wc *RollbackWorkflowClient) purgeNewerReleases(ctx context.Context) error {
+	// Get the helm releases that have been deployed at this generation
+	diff := wc.getDiff()
+	for _, name := range diff {
+		listOptions := client.MatchingLabels{
+			v1alpha1.OwnershipLabel: wc.appGroup.Name,
+			v1alpha1.HeritageLabel:  v1alpha1.HeritageValue,
+			v1alpha1.ChartLabel:     name,
+		}
+		releaseList := &fluxhelmv2beta1.HelmReleaseList{}
+		if err := wc.List(ctx, releaseList, listOptions); err != nil {
+			return fmt.Errorf("failed to list helm releases deployed by the application group: %w", err)
+		}
+		for _, release := range releaseList.Items {
+			if err := wc.Delete(ctx, &release); err != nil {
+				return fmt.Errorf("failed to delete release %s while purging new releases from the lastest rollout: %w", release.Name, err)
+			}
+		}
+	}
+	return nil
+}
+
+func (wc *RollbackWorkflowClient) getDiff() []string {
+	names := wc.appGroup.GetApplicationNames()
+	for _, appName := range wc.rollbackAppGroup.GetApplicationNames() {
+		names = utils.RemoveStringFromSlice(appName, names)
+	}
+	return names
 }

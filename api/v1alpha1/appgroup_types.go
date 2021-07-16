@@ -35,8 +35,14 @@ const (
 	AppGroupNameKey   = "appgroup"
 	AppGroupFinalizer = "application-group-finalizer"
 
-	LastSuccessfulAnnotation = "orkestra/last-successful-applicationgroup"
-	ParentChartAnnotation    = "orkestra/parent-chart"
+	LastSuccessfulAnnotation = "orkestra.azure.microsoft.com/last-successful-applicationgroup"
+	ParentChartAnnotation    = "orkestra.azure.microsoft.com/parent-chart"
+
+	HeritageLabel = "orkestra.azure.microsoft.com/heritage"
+	HeritageValue = "orkestra"
+
+	OwnershipLabel = "orkestra.azure.microsoft.com/owner"
+	ChartLabel     = "orkestra.azure.microsoft.com/chart"
 
 	ForwardWorkflow  WorkflowType = "forward"
 	ReverseWorkflow  WorkflowType = "reverse"
@@ -241,6 +247,14 @@ func GetJSON(values map[string]interface{}) (*apiextensionsv1.JSON, error) {
 	return &apiextensionsv1.JSON{
 		Raw: bytes,
 	}, nil
+}
+
+func (in *ApplicationGroup) GetApplicationNames() []string {
+	var names []string
+	for _, application := range in.Spec.Applications {
+		names = append(names, application.Name)
+	}
+	return names
 }
 
 // SetValues marshals the raw values into the JSON values

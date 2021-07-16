@@ -84,8 +84,9 @@ type RollbackWorkflowClient struct {
 	ClientOptions
 	executor ExecutorFunc
 
-	workflow *v1alpha13.Workflow
-	appGroup *v1alpha1.ApplicationGroup
+	workflow         *v1alpha13.Workflow
+	appGroup         *v1alpha1.ApplicationGroup
+	rollbackAppGroup *v1alpha1.ApplicationGroup
 }
 
 type ReverseWorkflowClient struct {
@@ -341,7 +342,7 @@ func initWorkflowObject(name, namespace string, parallelism *int64) *v1alpha13.W
 		ObjectMeta: v1.ObjectMeta{
 			Name:      name,
 			Namespace: namespace,
-			Labels:    map[string]string{HeritageLabel: Project},
+			Labels:    map[string]string{v1alpha1.HeritageLabel: v1alpha1.HeritageValue},
 		},
 		TypeMeta: v1.TypeMeta{
 			APIVersion: v1alpha13.WorkflowSchemaGroupVersionKind.GroupVersion().String(),

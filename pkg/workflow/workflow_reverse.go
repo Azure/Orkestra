@@ -55,6 +55,7 @@ func (wc *ReverseWorkflowClient) Generate(ctx context.Context) error {
 	var err error
 
 	forwardClient := NewBuilderFromClient(wc).Forward(wc.appGroup).Build()
+	rollbackClient := NewBuilderFromClient(wc).Rollback(wc.appGroup).Build()
 
 	// Get the forward workflow from the server and suspend it if it's still running
 	wc.forwardWorkflow, err = forwardClient.GetWorkflow(ctx)
@@ -65,6 +66,9 @@ func (wc *ReverseWorkflowClient) Generate(ctx context.Context) error {
 	}
 	if err := Suspend(ctx, forwardClient); err != nil {
 		return fmt.Errorf("failed to suspend forward workflow: %w", err)
+	}
+	if err := Suspend(ctx, rollbackClient); err != nil {
+		return fmt.Errorf("failed to suspend rollback workflow: %w", err)
 	}
 
 	wc.reverseWorkflow = initWorkflowObject(wc.getReverseName(), wc.namespace, wc.parallelism)
