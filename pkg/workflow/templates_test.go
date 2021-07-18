@@ -768,9 +768,10 @@ func Test_generateSubchartAndAppDAGTasks(t *testing.T) {
 
 func Test_appDAGTaskBuilder(t *testing.T) {
 	type args struct {
-		name    string
-		timeout *v1alpha13.AnyString
-		hrStr   *v1alpha13.AnyString
+		name         string
+		templateName string
+		timeout      *v1alpha13.AnyString
+		hrStr        *v1alpha13.AnyString
 	}
 	tests := []struct {
 		name string
@@ -780,9 +781,10 @@ func Test_appDAGTaskBuilder(t *testing.T) {
 		{
 			name: "testing with nil pointer args",
 			args: args{
-				name:    "myApp",
-				timeout: nil,
-				hrStr:   nil,
+				name:         "myApp",
+				templateName: "helmrelease-executor",
+				timeout:      nil,
+				hrStr:        nil,
 			},
 			want: v1alpha13.DAGTask{
 				Name:     "myapp",
@@ -804,9 +806,10 @@ func Test_appDAGTaskBuilder(t *testing.T) {
 		{
 			name: "testing with valid args",
 			args: args{
-				name:    "myApp",
-				timeout: utils.ToAnyStringPtr("5m"),
-				hrStr:   utils.ToAnyStringPtr("empty"),
+				name:         "myApp",
+				templateName: "helmrelease-executor",
+				timeout:      utils.ToAnyStringPtr("5m"),
+				hrStr:        utils.ToAnyStringPtr("empty"),
 			},
 			want: v1alpha13.DAGTask{
 				Name:     "myapp",
@@ -829,7 +832,7 @@ func Test_appDAGTaskBuilder(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got := appDAGTaskBuilder(tt.args.name, tt.args.timeout, tt.args.hrStr)
+			got := appDAGTaskBuilder(tt.args.name, tt.args.templateName, tt.args.timeout, tt.args.hrStr)
 			if !cmp.Equal(got, tt.want) {
 				t.Errorf("appDAGTaskBuilder() = %v", cmp.Diff(got, tt.want))
 			}

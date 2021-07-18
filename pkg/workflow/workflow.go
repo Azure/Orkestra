@@ -16,7 +16,7 @@ import (
 
 type ClientType string
 
-type ExecutorFunc func(string, ExecutorAction) v1alpha13.Template
+//type ExecutorFunc func(string, *v1alpha1.Executor, ExecutorAction) v1alpha13.Template
 
 var _ = ForwardWorkflowClient{}
 var _ = ReverseWorkflowClient{}
@@ -61,18 +61,17 @@ type Builder struct {
 	client     client.Client
 	clientType v1alpha1.WorkflowType
 	options    ClientOptions
-	executor   ExecutorFunc
-	logger     logr.Logger
+	//executor   ExecutorFunc
+	logger logr.Logger
 
-	forwardWorkflow *v1alpha13.Workflow
-	appGroup        *v1alpha1.ApplicationGroup
+	appGroup *v1alpha1.ApplicationGroup
 }
 
 type ForwardWorkflowClient struct {
 	client.Client
 	logr.Logger
 	ClientOptions
-	executor ExecutorFunc
+	//executor ExecutorFunc
 
 	workflow *v1alpha13.Workflow
 	appGroup *v1alpha1.ApplicationGroup
@@ -82,7 +81,7 @@ type RollbackWorkflowClient struct {
 	client.Client
 	logr.Logger
 	ClientOptions
-	executor ExecutorFunc
+	//executor ExecutorFunc
 
 	workflow *v1alpha13.Workflow
 	appGroup *v1alpha1.ApplicationGroup
@@ -92,7 +91,7 @@ type ReverseWorkflowClient struct {
 	client.Client
 	logr.Logger
 	ClientOptions
-	executor ExecutorFunc
+	//executor ExecutorFunc
 
 	forwardWorkflow *v1alpha13.Workflow
 	reverseWorkflow *v1alpha13.Workflow
@@ -149,50 +148,44 @@ func (builder *Builder) InNamespace(namespace string) *Builder {
 	return builder
 }
 
-func (builder *Builder) WithExecutor(executor ExecutorFunc) *Builder {
-	builder.executor = executor
-	return builder
-}
+// func (builder *Builder) WithExecutor(executor ExecutorFunc) *Builder {
+// 	builder.executor = executor
+// 	return builder
+// }
 
-func (builder *Builder) Build() Client {
+func (builder *Builder) Build() (c Client) {
+	// executor := builder.executor
+	// if executor == nil {
+	// 	executor = generateExecutorTemplate
+	// }
+
 	switch builder.clientType {
 	case v1alpha1.Forward:
-		forwardClient := &ForwardWorkflowClient{
+		c = &ForwardWorkflowClient{
 			Client:        builder.client,
 			Logger:        builder.logger,
 			ClientOptions: builder.options,
 			appGroup:      builder.appGroup,
-			executor:      builder.executor,
+			//executor:      executor,
 		}
-		if builder.executor == nil {
-			forwardClient.executor = defaultExecutor
-		}
-		return forwardClient
 	case v1alpha1.Reverse:
-		reverseClient := &ReverseWorkflowClient{
+		c = &ReverseWorkflowClient{
 			Client:        builder.client,
 			Logger:        builder.logger,
 			ClientOptions: builder.options,
 			appGroup:      builder.appGroup,
-			executor:      builder.executor,
+			//executor:      executor,
 		}
-		if builder.executor == nil {
-			reverseClient.executor = defaultExecutor
-		}
-		return reverseClient
 	default:
-		rollbackClient := &RollbackWorkflowClient{
+		c = &RollbackWorkflowClient{
 			Client:        builder.client,
 			Logger:        builder.logger,
 			ClientOptions: builder.options,
 			appGroup:      builder.appGroup,
-			executor:      builder.executor,
+			//executor:      executor,
 		}
-		if builder.executor == nil {
-			rollbackClient.executor = defaultExecutor
-		}
-		return rollbackClient
 	}
+	return
 }
 
 // Run calls the generate and Submit commands of the workflow client

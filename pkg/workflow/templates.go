@@ -81,7 +81,7 @@ func generateAppDAGTemplates(appGroup *v1alpha1.ApplicationGroup, namespace stri
 				Parallelism: parallelism,
 				DAG: &v1alpha13.DAGTemplate{
 					Tasks: []v1alpha13.DAGTask{
-						appDAGTaskBuilder(app.Name, getTimeout(app.Spec.Release.Timeout), hrStr),
+						appDAGTaskBuilder(app.Name, getExecutorTemplateName(app.Name), getTimeout(app.Spec.Release.Timeout), hrStr),
 					},
 				},
 			}
@@ -114,7 +114,7 @@ func generateSubchartAndAppDAGTasks(appGroupName, namespace string, app *v1alpha
 		}
 		hrStr := utils.HrToB64AnyStringPtr(hr)
 
-		task := appDAGTaskBuilder(subchartName, getTimeout(app.Spec.Release.Timeout), hrStr)
+		task := appDAGTaskBuilder(subchartName, getExecutorTemplateName(app.Name), getTimeout(app.Spec.Release.Timeout), hrStr)
 		task.Dependencies = utils.ConvertSliceToDNS1123(sc.Dependencies)
 		tasks = append(tasks, task)
 	}
@@ -144,7 +144,7 @@ func generateSubchartAndAppDAGTasks(appGroupName, namespace string, app *v1alpha
 	}
 
 	hrStr := utils.HrToB64AnyStringPtr(hr)
-	task := appDAGTaskBuilder(app.Name, getTimeout(app.Spec.Release.Timeout), hrStr)
+	task := appDAGTaskBuilder(app.Name, getExecutorTemplateName(app.Name), getTimeout(app.Spec.Release.Timeout), hrStr)
 	task.Dependencies = func() (out []string) {
 		for _, t := range tasks {
 			out = append(out, utils.ConvertToDNS1123(t.Name))
@@ -156,10 +156,10 @@ func generateSubchartAndAppDAGTasks(appGroupName, namespace string, app *v1alpha
 	return tasks, nil
 }
 
-func appDAGTaskBuilder(name string, timeout, hrStr *v1alpha13.AnyString) v1alpha13.DAGTask {
+func appDAGTaskBuilder(name, templateName string, timeout, hrStr *v1alpha13.AnyString) v1alpha13.DAGTask {
 	task := v1alpha13.DAGTask{
 		Name:     utils.ConvertToDNS1123(name),
-		Template: HelmReleaseExecutorName,
+		Template: templateName,
 		Arguments: v1alpha13.Arguments{
 			Parameters: []v1alpha13.Parameter{
 				{

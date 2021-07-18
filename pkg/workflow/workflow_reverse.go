@@ -72,8 +72,13 @@ func (wc *ReverseWorkflowClient) Generate(ctx context.Context) error {
 	if err != nil {
 		return fmt.Errorf("failed to generate argo reverse workflow: %w", err)
 	}
+	executorTemplates, err := generateExecutorTemplates(wc.appGroup, Delete)
+	if err != nil {
+		return fmt.Errorf("failed to generate workflow: %w", err)
+	}
 
-	updateWorkflowTemplates(wc.reverseWorkflow, *entry, wc.executor(HelmReleaseReverseExecutorName, Delete))
+	updateWorkflowTemplates(wc.reverseWorkflow, *entry)
+	updateWorkflowTemplates(wc.reverseWorkflow, executorTemplates...)
 	return nil
 }
 
@@ -123,7 +128,7 @@ func (wc *ReverseWorkflowClient) generateWorkflow() (*v1alpha13.Template, error)
 		for _, hr := range bucket {
 			task := v1alpha13.DAGTask{
 				Name:     utils.ConvertToDNS1123(hr.GetReleaseName() + "-" + hr.Namespace),
-				Template: HelmReleaseReverseExecutorName,
+				Template: getReverseExecutorTemplateName(hr.Labels["ChartLabelKey"]),
 				Arguments: v1alpha13.Arguments{
 					Parameters: []v1alpha13.Parameter{
 						{

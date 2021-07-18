@@ -1,21 +1,16 @@
 package workflow
 
 const (
+	// TODO: we might need to make it unique (this might solve parallel tests issue)
 	EntrypointTemplateName = "entry"
 
-	HelmReleaseArg                 = "helmrelease"
-	TimeoutArg                     = "timeout"
-	HelmReleaseExecutorName        = "helmrelease-executor"
-	HelmReleaseReverseExecutorName = "helmrelease-reverse-executor"
+	HelmReleaseArg = "helmrelease"
+	TimeoutArg     = "timeout"
 
 	ValuesKeyGlobal = "global"
 	ChartLabelKey   = "chart"
 
 	DefaultTimeout = "5m"
-
-	ExecutorName     = "executor"
-	ExecutorImage    = "azureorkestra/executor"
-	ExecutorImageTag = "v0.4.1"
 
 	ChartMuseumName = "chartmuseum"
 

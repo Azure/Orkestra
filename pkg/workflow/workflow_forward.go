@@ -65,10 +65,15 @@ func (wc *ForwardWorkflowClient) Generate(ctx context.Context) error {
 	if err != nil {
 		return fmt.Errorf("failed to generate workflow: %w", err)
 	}
+	executorTemplates, err := generateExecutorTemplates(wc.appGroup, Install)
+	if err != nil {
+		return fmt.Errorf("failed to generate workflow: %w", err)
+	}
 
 	// Update with the app dag templates, entry template, and executor template
 	updateWorkflowTemplates(wc.workflow, templates...)
-	updateWorkflowTemplates(wc.workflow, *entryTemplate, wc.executor(HelmReleaseExecutorName, Install))
+	updateWorkflowTemplates(wc.workflow, *entryTemplate)
+	updateWorkflowTemplates(wc.workflow, executorTemplates...)
 
 	return nil
 }

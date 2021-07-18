@@ -89,6 +89,20 @@ Release
 </tr>
 <tr>
 <td>
+<code>executor</code><br>
+<em>
+<a href="#orkestra.azure.microsoft.com/v1alpha1.Executor">
+Executor
+</a>
+</em>
+</td>
+<td>
+<em>(Optional)</em>
+<p>Executor holds container customizations for the executor to use when running pods</p>
+</td>
+</tr>
+<tr>
+<td>
 <code>subcharts</code><br>
 <em>
 <a href="#orkestra.azure.microsoft.com/v1alpha1.DAG">
@@ -364,6 +378,20 @@ Release
 </tr>
 <tr>
 <td>
+<code>executor</code><br>
+<em>
+<a href="#orkestra.azure.microsoft.com/v1alpha1.Executor">
+Executor
+</a>
+</em>
+</td>
+<td>
+<em>(Optional)</em>
+<p>Executor holds container customizations for the executor to use when running pods</p>
+</td>
+</tr>
+<tr>
+<td>
 <code>subcharts</code><br>
 <em>
 <a href="#orkestra.azure.microsoft.com/v1alpha1.DAG">
@@ -625,6 +653,59 @@ string
 <td>
 <em>(Optional)</em>
 <p>Dependencies on other applications by name</p>
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+<h3 id="orkestra.azure.microsoft.com/v1alpha1.Executor">Executor
+</h3>
+<p>
+(<em>Appears on:</em>
+<a href="#orkestra.azure.microsoft.com/v1alpha1.ApplicationSpec">ApplicationSpec</a>)
+</p>
+<div class="md-typeset__scrollwrap">
+<div class="md-typeset__table">
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>
+<code>name</code><br>
+<em>
+string
+</em>
+</td>
+<td>
+<p>Name of the container</p>
+</td>
+</tr>
+<tr>
+<td>
+<code>image</code><br>
+<em>
+string
+</em>
+</td>
+<td>
+<p>Docker image name</p>
+</td>
+</tr>
+<tr>
+<td>
+<code>tag</code><br>
+<em>
+string
+</em>
+</td>
+<td>
+<p>Docker image tag</p>
 </td>
 </tr>
 </tbody>

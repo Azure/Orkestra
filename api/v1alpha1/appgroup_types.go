@@ -62,9 +62,27 @@ type ApplicationSpec struct {
 	// +required
 	Release *Release `json:"release"`
 
+	// Executor holds container customizations for the executor to use when running pods
+	// +optional
+	Executor *Executor `json:"executor,omitempty"`
+
 	// Subcharts provides the dependency order among the subcharts of the application
 	// +optional
 	Subcharts []DAG `json:"subcharts,omitempty"`
+}
+
+type Executor struct {
+	// Name of the container
+	// +required
+	Name string `json:"name"`
+
+	// Docker image name
+	// +required
+	Image string `json:"image"`
+
+	// Docker image tag
+	// +required
+	Tag string `json:"tag"`
 }
 
 type Release struct {
