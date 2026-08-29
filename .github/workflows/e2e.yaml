@@ -9,9 +9,9 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
-        uses: actions/checkout@v2
+        uses: actions/checkout@0717577d45739eb3c851188b29f50ed6c0b2194e # v2.8.0
       - name: Create k8s Kind Cluster
-        uses: helm/kind-action@v1.2.0
+        uses: helm/kind-action@94729529f85113b88f4f819c17ce61382e6d8478 # v1.2.0
         with:
           cluster_name: orkestra
           config: .kind-cluster.yaml
@@ -33,11 +33,11 @@ jobs:
           kubectl cluster-info
           echo "current-context:" $(kubectl config current-context)
       - name: Setup Go
-        uses: actions/setup-go@v2
+        uses: actions/setup-go@bfdd3570ce990073878bf10f6b2d79082de49492 # v2.2.0
         with:
           go-version: '^1.16.0'
       - name: Restore Go cache
-        uses: actions/cache@v1
+        uses: actions/cache@f5ce41475b483ad7581884324a6eca9f48f8dcc7 # v1.2.1
         with:
           path: ~/go/pkg/mod
           key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
@@ -47,7 +47,7 @@ jobs:
         run: |
           make test
       - name: Upload coverage to Codecov
-        uses: codecov/codecov-action@v1
+        uses: codecov/codecov-action@29386c70ef20e286228c72b668a06fd0e8399192 # v1.5.2
         with:
           file: ./coverage.txt
       
